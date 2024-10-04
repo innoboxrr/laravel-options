@@ -1,0 +1,16 @@
+{
+    "name": "innoboxrr/laravel-options",
+    "description": "App Options",
+    "autoload": {
+        "psr-4": {
+            "Innoboxrr\\LaravelOptions\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Homero Raul",
+            "email": "h.raulvc@gmail.com"
+        }
+    ],
+    "require": {}
+}
