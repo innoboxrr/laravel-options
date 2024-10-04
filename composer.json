@@ -3,7 +3,8 @@
     "description": "App Options",
     "autoload": {
         "psr-4": {
-            "Innoboxrr\\LaravelOptions\\": "src/"
+            "Innoboxrr\\LaravelOptions\\": "src/",
+            "Innoboxrr\\LaravelOptions\\Database\\Factories\\": "database/factories/"
         }
     },
     "authors": [
@@ -24,6 +25,11 @@
                 "Innoboxrr\\LaravelOptions\\Providers\\EventServiceProvider",
                 "Innoboxrr\\LaravelOptions\\Providers\\RouteServiceProvider"
             ]
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Innoboxrr\\LaravelOptions\\Tests\\": "tests/"
         }
     }
 }
