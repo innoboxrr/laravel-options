@@ -5,6 +5,7 @@
     "autoload": {
         "psr-4": {
             "Innoboxrr\\LaravelOptions\\": "src/",
+            "Innoboxrr\\LaravelOptions\\Database\\Seeders\\": "database/seeders/",
             "Innoboxrr\\LaravelOptions\\Database\\Factories\\": "database/factories/"
         }
     },

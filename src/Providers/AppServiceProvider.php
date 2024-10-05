@@ -3,6 +3,7 @@
 namespace Innoboxrr\LaravelOptions\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Innoboxrr\LaravelOptions\Console\Commands\OptionSeederCommand;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,9 +28,13 @@ class AppServiceProvider extends ServiceProvider
 
             $this->publishes([__DIR__.'/../../config/laravel-options.php' => config_path('laravel-options.php')], 'config');
 
-            $this->publishes([__DIR__.'/../../resources/vue/laravel-options' => resource_path('vue/vendor/laravel-options')], 'vue');
+            $this->publishes([__DIR__.'/../../resources/vue' => resource_path('vue/vendor/laravel-options')], 'vue');
 
         }
+
+        $this->commands([
+            OptionSeederCommand::class,
+        ]);
 
     }
     
