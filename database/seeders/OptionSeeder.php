@@ -1,6 +1,6 @@
 <?php
 
-namespace Innoboxrr\LaravelOptions\Database\Seeder;
+namespace Innoboxrr\LaravelOptions\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Innoboxrr\LaravelOptions\Models\Option;
