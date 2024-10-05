@@ -21,12 +21,21 @@ const loadFromLocalStorage = () => {
     return null;
 };
 
-const encodeJSONRecursively = (obj) => {
+// Función que decodifica JSON de manera recursiva
+const parseJSONRecursively = (obj) => {
     Object.keys(obj).forEach(key => {
-        if (typeof obj[key] === 'object' && obj[key] !== null) {
-            encodeJSONRecursively(obj[key]);
-        } else if (typeof obj[key] !== 'string') {
-            obj[key] = JSON.stringify(obj[key]);
+        if (typeof obj[key] === 'string') {
+            try {
+                // Intentar parsear el valor como JSON
+                const parsed = JSON.parse(obj[key]);
+                // Si es un objeto válido, procesarlo recursivamente
+                if (typeof parsed === 'object' && parsed !== null) {
+                    obj[key] = parsed;
+                    parseJSONRecursively(obj[key]); // Procesar anidados
+                }
+            } catch (e) {
+                // Si no es JSON, dejar el valor tal cual
+            }
         }
     });
 };
@@ -54,7 +63,7 @@ export default {
     mutations: {
         setOptions: (state, options) => {
             let parsedValue = JSON.parse(options.value);
-            encodeJSONRecursively(parsedValue);
+            parseJSONRecursively(parsedValue); // Procesar JSON anidado
             state.options = parsedValue;
             saveToLocalStorage(parsedValue);
         }
@@ -78,13 +87,13 @@ export default {
             });
             
             if (res.data.length) {
-                // Convertir la respuesta a un super objeto JSON donde la key sea el nombre de la propiedad
+                // Convertir la respuesta a un objeto JSON donde la key sea el nombre de la propiedad
                 let optionsObj = {};
                 
                 res.data.forEach(option => {
                     optionsObj[option.key] = option.value;
                 });
-                
+
                 commit('setOptions', { value: JSON.stringify(optionsObj) });
             }
         },
