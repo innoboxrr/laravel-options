@@ -30,7 +30,7 @@ class OptionSeederCommand extends Command
     {
         // Ejecutar el seeder específico del paquete
         Artisan::call('db:seed', [
-            '--class' => 'Innoboxrr\\LaravelOptions\\Database\\Seeder\\OptionSeeder'
+            '--class' => 'Innoboxrr\\LaravelOptions\\Database\\Seeders\\OptionSeeder'
         ]);
 
         $this->info('OptionSeeder ejecutado correctamente.');
