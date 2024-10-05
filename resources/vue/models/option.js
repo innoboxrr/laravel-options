@@ -1,6 +1,6 @@
 import makeHttpRequest from 'innoboxrr-http-request'
 
-export const API_ROUTE_PREFIX = 'api.option.'; // Reemplaza con la ruta adecuada
+export const API_ROUTE_PREFIX = 'api.laravel-options.option.'; // Reemplaza con la ruta adecuada
 
 export const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); // Reemplaza con el token adecuado
 
