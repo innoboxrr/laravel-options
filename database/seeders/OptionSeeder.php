@@ -43,7 +43,7 @@ class OptionSeeder extends Seeder
                             "name" => "HeaderOne",
                             "props" => [
                                 "display" => true,
-                                "logo" => "https://via.placeholder.com/150",
+                                "logo" => "https://i.imgur.com/WxNkK7J.png",
                                 "facebook" => "https://facebook.com",
                                 "twitter" => "https://twitter.com",
                                 "instagram" => "https://instagram.com",
