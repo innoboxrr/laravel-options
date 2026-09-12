@@ -16,8 +16,9 @@
         }
     ],
     "require-dev": {
-        "orchestra/testbench": "^9.5 || ^10.0 || ^11.0",
-        "innoboxrr/larapack-generator": "^5.0"
+        "orchestra/testbench": "^11.0",
+        "innoboxrr/larapack-generator": "^7.0",
+        "phpunit/phpunit": "^11.5 || ^12.0"
     },
     "extra": {
         "laravel": {
@@ -33,5 +34,12 @@
         "psr-4": {
             "Innoboxrr\\LaravelOptions\\Tests\\": "tests/"
         }
+    },
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^13.0"
+    },
+    "suggest": {
+        "maatwebsite/excel": "Necesario para la exportacion de opciones (OptionsExports implementa FromView) (^3.1)."
     }
 }
