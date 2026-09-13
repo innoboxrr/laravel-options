@@ -23,7 +23,7 @@ class Option extends Model
         OptionAssignment,
         OptionOperations,
         OptionMutators;
-        
+
     protected $fillable = [
         'name',
         'key',
@@ -61,6 +61,40 @@ class Option extends Model
     protected static function newFactory()
     {
         return \Innoboxrr\LaravelOptions\Database\Factories\OptionFactory::new();
+    }
+
+    /**
+     * El valor de una opcion, por su clave.
+     *
+     * Las opciones estructuradas (theme, por ejemplo) se guardan como JSON:
+     * si el valor es un objeto o un arreglo JSON se devuelve como arreglo, y
+     * cualquier otro valor tal cual, como texto. Si la clave no existe, esta
+     * borrada o su valor es null, devuelve $default.
+     *
+     * No hay cache: cada llamada es una consulta.
+     */
+    public static function value(string $key, mixed $default = null): mixed
+    {
+        $value = static::query()->where('key', $key)->value('value');
+
+        if ($value === null) {
+            return $default;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : $value;
+    }
+
+    /**
+     * value es a la vez columna y el metodo de arriba. Eloquent toma por
+     * relacion todo metodo que se llame como un atributo no cargado: sin esto,
+     * leer $option->value de una fila consultada sin esa columna llamaria a
+     * value() sin argumentos.
+     */
+    public function isRelation($key)
+    {
+        return $key !== 'value' && parent::isRelation($key);
     }
 
 }
