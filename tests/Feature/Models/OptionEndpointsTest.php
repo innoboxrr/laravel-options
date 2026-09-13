@@ -2,245 +2,79 @@
 
 namespace Innoboxrr\LaravelOptions\Tests\Feature\Models;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Innoboxrr\LaravelOptions\Models\Option;
 use Innoboxrr\LaravelOptions\Tests\TestCase;
 
+/**
+ * Que la API de opciones responde como la usan el sitio y el panel.
+ *
+ * El sitio publico lee las opciones sin sesion, asi que index y show son
+ * publicos; todo lo que escribe pide sesion y lo decide OptionPolicy.
+ */
 class OptionEndpointsTest extends TestCase
 {
-
-    use RefreshDatabase,
-        WithFaker;
-
-    public function test_option_policies_endpoint()
+    private function option(array $attributes = []): Option
     {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::factory()->create();
-        
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'id' => $option->id
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/policies', $payload, $headers)
-            ->assertStatus(200);
-
+        return Option::forceCreate($attributes + [
+            'key' => uniqid('key_'),
+            'name' => 'Nombre',
+            'value' => 'Valor',
+        ]);
     }
 
-    public function test_option_policy_endpoint()
+    public function test_un_invitado_lee_el_indice(): void
     {
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
+        $option = $this->option(['key' => 'site_name', 'value' => 'Mi Sitio']);
 
-        $payload = [
-            'policy' => 'index'
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/policy', $payload, $headers)
-            ->assertJsonStructure([
-                'index'
-            ])
-            ->assertStatus(200);
-
+        $this->getJson(route('api.laravel-options.option.index'))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $option->id, 'key' => 'site_name', 'value' => 'Mi Sitio']);
     }
 
-    public function test_option_index_auth_endpoint()
+    public function test_un_invitado_lee_una_opcion(): void
     {
+        $option = $this->option();
 
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'managed' => true
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/index', $payload, $headers)
-            ->assertStatus(200);
-
+        $this->getJson(route('api.laravel-options.option.show', ['option_id' => $option->id]))
+            ->assertOk()
+            ->assertJsonPath('data.id', $option->id)
+            ->assertJsonPath('data.key', $option->key);
     }
 
-    public function test_option_index_guest_endpoint()
+    /**
+     * search-surge pagina de 10 en 10 si no se le dice nada, y el sitio carga
+     * todas las opciones de una vez: paginate=0 las trae todas.
+     */
+    public function test_paginate_cero_devuelve_todas_las_opciones(): void
     {
+        foreach (range(1, 15) as $i) {
+            $this->option(['key' => "key_{$i}"]);
+        }
 
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
+        $this->getJson(route('api.laravel-options.option.index'))
+            ->assertOk()
+            ->assertJsonCount(10, 'data');
 
-        $payload = [
-            'managed' => true
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/index', $payload, $headers)
-            ->assertStatus(401);
-            
+        $this->getJson(route('api.laravel-options.option.index', ['paginate' => 0]))
+            ->assertOk()
+            ->assertJsonCount(15, 'data');
     }
-    
-    public function test_option_show_auth_endpoint()
+
+    public function test_un_invitado_no_puede_escribir(): void
     {
+        $option = $this->option();
+        $id = ['option_id' => $option->id];
 
-        $option = \Innoboxrr\LaravelOptions\Models\Option::latest()->first();
+        $this->postJson(route('api.laravel-options.option.create'), ['key' => 'k', 'name' => 'n', 'value' => 'v'])->assertUnauthorized();
+        $this->putJson(route('api.laravel-options.option.update'), $id + ['value' => 'otro'])->assertUnauthorized();
+        $this->deleteJson(route('api.laravel-options.option.delete'), $id)->assertUnauthorized();
+        $this->postJson(route('api.laravel-options.option.restore'), $id)->assertUnauthorized();
+        $this->deleteJson(route('api.laravel-options.option.force.delete'), $id)->assertUnauthorized();
+        $this->postJson(route('api.laravel-options.option.export'))->assertUnauthorized();
+        $this->getJson(route('api.laravel-options.option.policies'))->assertUnauthorized();
+        $this->getJson(route('api.laravel-options.option.policy', ['policy' => 'create']))->assertUnauthorized();
 
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'option_id' => $option->id
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/show', $payload, $headers)
-            ->assertStatus(200);
-            
+        $this->assertSame('Valor', $option->fresh()->value);
+        $this->assertSame(1, Option::count());
     }
-
-    public function test_option_show_guest_endpoint()
-    {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::latest()->first();
-
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'option_id' => $option->id
-        ];
-
-        $this->json('GET', '/api/innoboxrr/laraveloptions/option/show', $payload, $headers)
-            ->assertStatus(401);
-            
-    }
-
-    public function test_option_create_endpoint()
-    {
-
-        $user = \Innoboxrr\LaravelOptions\Models\User::first();
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = \Innoboxrr\LaravelOptions\Models\Option::factory()->make()->getAttributes();
-
-        $this->json('POST', '/api/innoboxrr/laraveloptions/option/create', $payload, $headers)
-            ->assertStatus(201);
-            
-    }
-
-    public function test_option_update_endpoint()
-    {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::factory()->create();
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            ...\Innoboxrr\LaravelOptions\Models\Option::factory()->make()->getAttributes(),
-            'option_id' => $option->id
-        ];
-
-        $this->json('PUT', '/api/innoboxrr/laraveloptions/option/update', $payload, $headers)
-            ->assertStatus(200);
-            
-    }
-
-    public function test_option_delete_endpoint()
-    {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::latest()->first();
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'option_id' => $option->id
-        ];
-
-        $this->json('DELETE', '/api/innoboxrr/laraveloptions/option/delete', $payload, $headers)
-            ->assertStatus(200);
-            
-    }
-
-    public function test_option_restore_endpoint()
-    {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::first();
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'option_id' => $option->id
-        ];
-
-        $this->json('POST', '/api/innoboxrr/laraveloptions/option/restore', $payload, $headers)
-            ->assertStatus(200);
-            
-    }
-
-    public function test_option_force_delete_endpoint()
-    {
-
-        $option = \Innoboxrr\LaravelOptions\Models\Option::latest()->first();
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            'option_id' => $option->id
-        ];
-
-        $this->json('DELETE', '/api/innoboxrr/laraveloptions/option/force-delete', $payload, $headers)
-            ->assertStatus(403);
-            
-    }
-
-    public function test_option_export_endpoint()
-    {   
-
-        $headers = [
-            'Authorization' => config('test.token'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'
-        ];  
-
-        $payload = [
-            //
-        ];
-
-        $this->json('POST', '/api/innoboxrr/laraveloptions/option/export', $payload, $headers)
-            ->assertStatus(200);
-            
-    }
-
 }
