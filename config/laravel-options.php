@@ -4,10 +4,15 @@ return [
 
 	'user_class' => 'App\Models\User',
 
-	'excel_view' => 'innoboxrrlaraveloptions::excel.',
+	// Las vistas del paquete se cargan con el prefijo laravel-options::.
+	'excel_view' => 'laravel-options::excel.',
 
-	'notification_via' => ['mail', 'database'],
+	// Por dónde avisa la exportación. `database` necesita la tabla de
+	// notificaciones de la aplicación: php artisan make:notifications-table
+	'notification_via' => ['mail'],
 
-	'export_disk' => 's3',
-	
+	// Dónde se guarda el archivo exportado. `local` funciona en cualquier
+	// aplicación; en producción, normalmente `s3`.
+	'export_disk' => env('LARAVEL_OPTIONS_EXPORT_DISK', 'local'),
+
 ];
