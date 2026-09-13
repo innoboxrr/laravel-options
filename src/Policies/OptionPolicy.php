@@ -21,7 +21,10 @@ class OptionPolicy
     public function before(User $user, string $ability): ?bool
     {
 
-        $exceptAbilities = [];
+        // Lo que ni un administrador hace sin que lo decidas en su metodo. El
+        // borrado permanente nace apagado: quitalo de aqui y escribe quien
+        // puede en forceDelete() cuando lo quieras.
+        $exceptAbilities = ['forceDelete'];
 
         $isAdmin = method_exists($user, 'isAdmin') && $user->isAdmin();
 
