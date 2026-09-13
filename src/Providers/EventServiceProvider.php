@@ -2,94 +2,61 @@
 
 namespace Innoboxrr\LaravelOptions\Providers;
 
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\ServiceProvider;
+use Innoboxrr\LaravelOptions\Http\Events\Option\Events;
+use Innoboxrr\LaravelOptions\Http\Events\Option\Listeners;
+use Innoboxrr\LaravelOptions\Models\Option;
+use Innoboxrr\LaravelOptions\Observers\OptionObserver;
 
+/**
+ * Enlaza los eventos del paquete con sus listeners y el observer de Option.
+ *
+ * Extiende el ServiceProvider base y no el EventServiceProvider de Laravel:
+ * ese registra SendEmailVerificationNotification para Registered en cada
+ * subclase, y la aplicacion que lo instalaba mandaba el correo de
+ * verificacion una vez por cada paquete asi.
+ *
+ * Tampoco pasa por la cache. Antes descubria eventos y observers recorriendo
+ * carpetas y guardaba el resultado con Cache::remember() al arrancar: con
+ * CACHE_STORE=database, el valor por defecto de Laravel, eso consulta la
+ * tabla cache antes de que php artisan migrate haya podido crearla.
+ */
 class EventServiceProvider extends ServiceProvider
 {
-    public function boot()
+    /**
+     * @var array<class-string, array<int, class-string>>
+     */
+    protected array $listen = [
+        Events\CreateEvent::class => [
+            Listeners\CreateEvent\DefaultOperation::class,
+        ],
+        Events\UpdateEvent::class => [
+            Listeners\UpdateEvent\DefaultOperation::class,
+        ],
+        Events\DeleteEvent::class => [
+            Listeners\DeleteEvent\DefaultOperation::class,
+        ],
+        Events\RestoreEvent::class => [
+            Listeners\RestoreEvent\DefaultOperation::class,
+        ],
+        Events\ForceDeleteEvent::class => [
+            Listeners\ForceDeleteEvent\DefaultOperation::class,
+        ],
+        Events\ExportEvent::class => [
+            Listeners\ExportEvent\DefaultOperation::class,
+            Listeners\ExportEvent\SendExportNotification::class,
+        ],
+    ];
+
+    public function boot(): void
     {
-        $this->registerEventsAndObservers();
-    }
-
-    private function registerEventsAndObservers()
-    {
-        $cacheKey = 'laravel_options_events_and_observers';
-
-        $data = Cache::remember($cacheKey, now()->addDay(), function () {
-            return [
-                'events' => $this->customDiscoverEvents(),
-                'observers' => $this->customDiscoverObservers()
-            ];
-        });
-
-        foreach ($data['events'] as $event => $listeners) {
+        foreach ($this->listen as $event => $listeners) {
             foreach ($listeners as $listener) {
                 Event::listen($event, $listener);
             }
         }
 
-        foreach ($data['observers'] as $model => $observer) {
-            $model::observe($observer);
-        }
+        Option::observe(OptionObserver::class);
     }
-
-    protected function customDiscoverEvents()
-    {
-        $events = [];
-        $basePath = realpath(__DIR__ . '/../Http/Events');
-        $namespace = 'Innoboxrr\LaravelOptions\Http\Events\\';
-
-        // Recorremos cada directorio de modelo dentro de Events
-        $models = glob("{$basePath}/*", GLOB_ONLYDIR);
-        foreach ($models as $modelPath) {
-            $model = basename($modelPath);
-
-            // Buscamos todos los eventos para el modelo actual
-            $modelEvents = glob("{$modelPath}/Events/*.php", GLOB_BRACE);
-            foreach ($modelEvents as $eventPath) {
-                $eventName = pathinfo($eventPath, PATHINFO_FILENAME);
-                $eventClass = "{$namespace}{$model}\\Events\\{$eventName}";
-
-                // Buscamos todos los listeners para el evento actual
-                $listeners = glob("{$modelPath}/Listeners/{$eventName}/*.php", GLOB_BRACE);
-                foreach ($listeners as $listenerPath) {
-                    $listenerName = pathinfo($listenerPath, PATHINFO_FILENAME);
-                    $listenerClass = "{$namespace}{$model}\\Listeners\\{$eventName}\\{$listenerName}";
-
-                    // Agregamos el evento y su listener al array
-                    $events[$eventClass][] = $listenerClass;
-                }
-            }
-        }
-
-        return $events;
-    }
-
-    protected function customDiscoverObservers()
-    {
-        $observers = [];
-        $modelsPath = realpath(__DIR__ . '/../Models');
-        $observersPath = realpath(__DIR__ . '/../Observers');
-        $namespaceModel = 'Innoboxrr\LaravelOptions\Models\\';
-        $namespaceObserver = 'Innoboxrr\LaravelOptions\Observers\\';
-
-        // Recorremos cada archivo de modelo en el directorio Models
-        $modelFiles = glob("{$modelsPath}/*.php");
-        foreach ($modelFiles as $modelFilePath) {
-            $modelName = pathinfo($modelFilePath, PATHINFO_FILENAME);
-            $modelClass = $namespaceModel . $modelName;
-            $observerName = $modelName . 'Observer';
-            $observerClass = $namespaceObserver . $observerName;
-
-            // Comprobamos si el observador existe y lo agregamos al array
-            if (file_exists($observersPath . '/' . $observerName . '.php') && class_exists($modelClass) && class_exists($observerClass)) {
-                $observers[$modelClass] = $observerClass;
-            }
-        }
-
-        return $observers;
-    }
-
 }
