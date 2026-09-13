@@ -18,6 +18,8 @@
     "require-dev": {
         "orchestra/testbench": "^11.0",
         "innoboxrr/larapack-generator": "^7.0",
+        "laravel/sanctum": "^4.0",
+        "maatwebsite/excel": "^3.1 || ^4.0",
         "phpunit/phpunit": "^11.5 || ^12.0"
     },
     "extra": {
@@ -37,9 +39,12 @@
     },
     "require": {
         "php": "^8.3",
-        "illuminate/support": "^13.0"
+        "illuminate/support": "^13.0",
+        "innoboxrr/search-surge": "^3.0",
+        "innoboxrr/traits": "^2.1"
     },
     "suggest": {
-        "maatwebsite/excel": "Necesario para la exportacion de opciones (OptionsExports implementa FromView) (^3.1)."
+        "laravel/sanctum": "Protege las rutas de escritura con el guard sanctum (^4.0).",
+        "maatwebsite/excel": "Necesario para la exportacion de opciones (OptionsExports implementa FromView) (^3.1 || ^4.0)."
     }
 }
