@@ -3,7 +3,7 @@
 namespace Innoboxrr\LaravelOptions\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
+use Innoboxrr\LaravelOptions\Database\Seeders\OptionSeeder;
 
 class OptionSeederCommand extends Command
 {
@@ -19,22 +19,28 @@ class OptionSeederCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Ejecutar el seeder de opciones para el paquete LaravelOptions';
+    protected $description = 'Crear las opciones por defecto que falten, sin tocar las existentes';
 
     /**
-     * Execute the console command.
-     *
-     * @return int
+     * db:seed pide confirmacion en produccion, y llamado desde aqui no hay a
+     * quien preguntar: se cancelaba y el comando decia igualmente que habia
+     * sembrado. --force es seguro porque el seeder solo crea lo que falta.
      */
-    public function handle()
+    public function handle(): int
     {
-        // Ejecutar el seeder específico del paquete
-        Artisan::call('db:seed', [
-            '--class' => 'Innoboxrr\\LaravelOptions\\Database\\Seeders\\OptionSeeder'
+        $status = $this->call('db:seed', [
+            '--class' => OptionSeeder::class,
+            '--force' => true,
         ]);
+
+        if ($status !== self::SUCCESS) {
+            $this->error('No se pudieron sembrar las opciones.');
+
+            return $status;
+        }
 
         $this->info('OptionSeeder ejecutado correctamente.');
 
-        return 0;
+        return self::SUCCESS;
     }
 }
