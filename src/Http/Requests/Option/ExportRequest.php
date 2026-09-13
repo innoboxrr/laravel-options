@@ -11,7 +11,7 @@ class ExportRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        
+
         $this->merge([
             'paginate' => 0,
             'managed' => true,
@@ -54,10 +54,30 @@ class ExportRequest extends FormRequest
     public function handle()
     {
 
-        event(new ExportEvent($this->all(), $this->user()));
+        // maatwebsite/excel es sugerido, no requerido. Sin el, el listener
+        // reventaba con "Class not found" y el panel enseñaba un 500 opaco.
+        if (! $this->excelIsInstalled()) {
+            return response()->json([
+                'message' => 'La exportación de opciones necesita maatwebsite/excel. Instálalo con: composer require maatwebsite/excel',
+            ], 501);
+        }
+
+        try {
+            event(new ExportEvent($this->all(), $this->user()));
+        } catch (\Throwable $exception) {
+            // El detalle va al log; a quien exporta, un mensaje que entienda.
+            report($exception);
+
+            return response()->json(['message' => 'No se pudo generar la exportación.'], 500);
+        }
 
         return response()->json(['status' => true]);
 
     }
-    
+
+    protected function excelIsInstalled(): bool
+    {
+        return class_exists(\Maatwebsite\Excel\Excel::class);
+    }
+
 }
