@@ -95,7 +95,9 @@ A config file published before 2.1 still has `export_disk => 's3'` and `notifica
 
 ## Vue integration
 
-`resources/vue/models/option.js` and a Vuex store (`--tag=vue`). Settings are usually edited from an admin panel, and shipping the model and store alongside the backend keeps the two from drifting apart.
+The `vue` tag publishes `resources/vue/models/option.js` and a Vuex store from the old base app. You don't need them with the current one: `innoboxrr/laravel-setup` 7 ships its own options store for Vue (Pinia) and React (zustand), which loads every option at startup and saves them from the site editor.
+
+Full documentation of the ecosystem, in Spanish and English: <https://innoboxrr.github.io/docs/paquetes/laravel-options>.
 
 ---
 
