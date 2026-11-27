@@ -17,7 +17,7 @@
     ],
     "require-dev": {
         "orchestra/testbench": "^11.0",
-        "innoboxrr/larapack-generator": "^7.0",
+        "innoboxrr/larapack-generator": "^9.0",
         "laravel/sanctum": "^4.0",
         "maatwebsite/excel": "^3.1 || ^4.0",
         "phpunit/phpunit": "^11.5 || ^12.0"
